@@ -54,9 +54,6 @@ def fig_legend():
     plt.show()
 
 
-# fig_legend()
-
-
 def read_labels(label_path):
     """Reads the labels and positions for a single annotation file
 
@@ -88,24 +85,33 @@ def show_labeled_img(img_path, label_path=None, label_text=False):
     if not label_path is None:
         labels = read_labels(label_path)
         for label in labels:
+            # Convert normalized to coordinates and widths/heights in units of pixels
             pos = np.array(
                 [img.shape[1], img.shape[0], img.shape[1], img.shape[0]]
             ) * np.array(label.pos)
             x_center, y_center, w, h = pos
+            # Convert centered coordinates to upper-left corner
             x = x_center - w / 2
             y = y_center - h / 2
             pos = [x, y, w, h]
+            # Plot the rectangle using the color of the class
             ax.plot(
                 [x, x, x + w, x + w, x],
                 [y, y + h, y + h, y, y],
                 colors[label.cls],
                 label=names[label.cls],
             )
+            # Annotator is part of the helper functionality from YOLO itself, didn't work out for me so I used Matplotlib instead
             # annotator = Annotator(img, line_width=3)
             # annotator.box_label(pos, names[label.cls], (255, 0, 0))
+    # Plot the image
     im = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    ax.legend()
+    ax.legend()  # Legend is not working in Jupyter notebook somehow?
     ax.imshow(im)
-    # fig.show()
     return fig
-    # display(Image.fromarray(im))
+
+
+if __name__ == "__main__":
+
+    # Test legend()
+    fig_legend()
