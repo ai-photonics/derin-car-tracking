@@ -3,6 +3,28 @@ import random
 import os
 from pathlib import Path
 import shutil
+from PIL import Image
+
+
+def convert2yolo_file(label_file, target_label_file, img_file):
+        """This function is adapted from the YOLO official conversion function"""
+        img_size = Image.open(img_file).size
+        dw, dh = 1.0 / img_size[0], 1.0 / img_size[1]
+        lines = []
+
+        with open(label_file, encoding="utf-8") as file:
+            for row in [x.split(",") for x in file.read().strip().splitlines()]:
+                if row[4] != "0":  # Skip ignored regions
+                    x, y, w, h = map(int, row[:4])
+                    cls = int(row[5]) - 1
+                    # Convert to YOLO format
+                    x_center, y_center = (x + w / 2) * dw, (y + h / 2) * dh
+                    w_norm, h_norm = w * dw, h * dh
+                    lines.append(
+                        f"{cls} {x_center:.6f} {y_center:.6f} {w_norm:.6f} {h_norm:.6f}\n"
+                    )
+        # Write the label in YOLO format to the target file
+        target_label_file.write_text("".join(lines), encoding="utf-8")
 
 
 def copy_temp_data(base_path, split_name, ids):
@@ -14,7 +36,12 @@ def copy_temp_data(base_path, split_name, ids):
         print(f"Copying {id}.jpg to {image_path}")
         shutil.copy((source_image_path / f"{id}.jpg"), (image_path / f"{id}.jpg"))
         print(f"Copying {id}.txt to {label_path}")
-        shutil.copy((source_label_path / f"{id}.txt"), (label_path / f"{id}.txt"))
+        convert2yolo_file(
+            label_file=(source_label_path / f"{id}.txt"), 
+            target_label_file=(label_path / f"{id}.txt"), 
+            img_file=(source_image_path / f"{id}.jpg")
+        )
+        #shutil.copy(, (label_path / f"{id}.txt"))
 
 
 # Get all filenames
