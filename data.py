@@ -28,8 +28,8 @@ def convert2yolo_file(label_file, target_label_file, img_file):
 
 
 def copy_temp_data(base_path, split_name, ids):
-    image_path = base_path / split_name / "images" 
-    label_path = base_path / split_name / "labels" 
+    image_path = base_path / "darkset" / split_name / "images" 
+    label_path = base_path / "darkset" / split_name / "labels" 
     image_path.mkdir(parents=True, exist_ok=True)
     label_path.mkdir(parents=True, exist_ok=True)
     for id in ids:
@@ -46,9 +46,9 @@ def copy_temp_data(base_path, split_name, ids):
 
 # Get all filenames
 base_path = Path("./data/visdrone/det")
-source_image_path = base_path / "light"
+source_image_path = base_path / "dark"
 source_label_path = base_path / "annotations"
-img_files = glob.glob('*.jpg', root_dir='./data/visdrone/det/light')
+img_files = glob.glob('*.jpg', root_dir='./data/visdrone/det/dark')
 img_ids = [img_file.replace('.jpg', '') for img_file in img_files]
 print(img_files)
 print(img_ids)

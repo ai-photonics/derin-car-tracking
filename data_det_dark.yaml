@@ -1,0 +1,6 @@
+train: ./data/visdrone/det/darkset/train/images
+val: ./data/visdrone/det/darkset/valid/images
+test: ./data/visdrone/det/darkset/test/images
+
+nc: 10
+names: ["pedestrian", "people", "bicycle", "car", "van", "truck", "tricycle", "awning-tricycle", "bus", "motor"]
