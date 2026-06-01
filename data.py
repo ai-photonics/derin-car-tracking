@@ -82,26 +82,78 @@ def split_data(img_ids, split_ratios):
     return train_ids, val_ids, test_ids
 
 
-#def select_data(img_metas_list, ns):
-#    for img_metas in img_metas_list:
+def select_data(img_meta_list, ns):
+    ids = list(range(len(img_meta_list)))
+    rand_ids = random.sample(ids, k=ns)
+    img_meta_sub = img_meta_list[rand_ids]
+    path_sub = [meta.img_path for meta in img_meta_sub]
+
+    return path_sub, img_meta_sub
 
 
-
-base_path = Path("./data/visdrone/det")
-source_image_path = base_path / "dark"
-source_label_path = base_path / "annotations"
-
-image_paths_ori = [(base_path / "dark"), (base_path / "light")]
-print(image_paths_ori)
-label_path_ori = base_path / "annotations"
+def list_image_ids(input_folder):
+    img_files = glob.glob('*.jpg', root_dir=input_folder)
+    img_ids = [img_file.replace('.jpg', '') for img_file in img_files]
+    return img_ids, img_files
 
 
-img_metas_list = get_ori_data(image_paths_ori=image_paths_ori, tags=["dark", "light"], label_path_ori=source_label_path)
+def select_files(input_folder, output_paths, split_ns, do_append=False):
+    img_ids, img_files = list_image_ids(input_folder / "images")
+    # Shuffle all samples first to prevent bias in train/valid/test selection
+    random.shuffle(img_files)
+    start_n = 0
+    stop_n = 0
+    if do_append: 
+        write_mode = 'a+' 
+    else: 
+        write_mode = 'w+'
+    for j, n in enumerate(split_ns):
+        stop_n = stop_n + n
+        img_paths = [str(input_folder / "images") + "/" + img_file + "\n" for img_file in sorted(img_files[start_n:stop_n])]
+        with open(output_paths[j], mode=write_mode) as f:
+            f.writelines(img_paths)
+        start_n = start_n + n
+
+
+def convert_labels(input_folder, source_label_path):
+    img_ids, img_files = list_image_ids(input_folder / "images")
+    label_path = input_folder / "labels"
+    for id in sorted(img_ids):
+        convert2yolo_file(
+            label_file=(source_label_path / f"{id}.txt"), 
+            target_label_file=(label_path / f"{id}.txt"), 
+            img_file=(input_folder / "images" / f"{id}.jpg")
+        )
+
+
+#base_path = Path("./data/visdrone/det")
+#source_image_path = base_path / "dark"
+#source_label_path = base_path / "annotations"
+#
+#image_paths_ori = [(base_path / "dark"), (base_path / "light")]
+#print(image_paths_ori)
+#label_path_ori = base_path / "annotations"
+#
+#
+#img_metas_list = get_ori_data(image_paths_ori=image_paths_ori, tags=["dark", "light"], label_path_ori=source_label_path)
 #[print(img_meta) for img_meta in img_metas_list[1]]
 # Get all filenames
 
 # Split data
-split_ratios = [0.7, 0.2, 0.1]
+#split_ratios = [0.7, 0.2, 0.1]
+
+image_type = "light-50_dark-50"
+base_path = Path("./data/visdrone/det")
+input_folders = [(base_path / "light"), (base_path / "dark")]
+output_paths = [
+    (base_path / f"{image_type}set_train.txt"), 
+    (base_path / f"{image_type}set_valid.txt"), 
+    (base_path / f"{image_type}set_test.txt")
+]
+source_label_path = base_path / "annotations"
+for input_folder in input_folders:
+    select_files(input_folder, output_paths, split_ns=[50, 32, 30], do_append=True)
+    convert_labels(input_folder, source_label_path)
 
 ## Temporarily copy data to the images/annotations folder
 #copy_temp_data(base_path, split_name="train", ids=train_ids)
