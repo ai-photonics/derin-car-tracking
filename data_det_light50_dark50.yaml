@@ -1,0 +1,10 @@
+#train: ./data/visdrone/det/lightset/train/images
+#val: ./data/visdrone/det/lightset/valid/images
+#test: ./data/visdrone/det/lightset/test/images
+
+train: ./data/visdrone/det/light-50_dark-50set_train.txt
+val: ./data/visdrone/det/light-50_dark-50set_valid.txt
+test: ./data/visdrone/det/light-50_dark-50set_test.txt
+
+nc: 10
+names: ["pedestrian", "people", "bicycle", "car", "van", "truck", "tricycle", "awning-tricycle", "bus", "motor"]
