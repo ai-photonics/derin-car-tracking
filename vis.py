@@ -6,6 +6,9 @@ from ultralytics.utils.plotting import Annotator
 from enum import Enum
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
+#import seaborn as sns
+import colorsys
 
 
 # Classes (annotation)
@@ -79,7 +82,48 @@ def show_cv2_img(img):
     display(Image.fromarray(im))
 
 
-def show_labeled_img(img_path, label_path=None, label_text=False):
+def scale_lightness(rgb, scale_l):
+    # convert rgb to hls
+    h, l, s = colorsys.rgb_to_hls(*rgb)
+    # manipulate h, l, s values and return as rgb
+    return colorsys.hls_to_rgb(h, min(1, l * scale_l), s = s)
+
+
+def show_labeled_img(img_path, label_path=None, label_text=False, show_axis=False):
+    img = cv2.imread(img_path)
+    fig, ax = plt.subplots()
+    if not label_path is None:
+        labels = read_labels(label_path)
+        for label in labels:
+            # Convert normalized to coordinates and widths/heights in units of pixels
+            pos = np.array(
+                [img.shape[1], img.shape[0], img.shape[1], img.shape[0]]
+            ) * np.array(label.pos)
+            x_center, y_center, w, h = pos
+            # Convert centered coordinates to upper-left corner
+            x = x_center - w / 2
+            y = y_center - h / 2
+            pos = [x, y, w, h]
+            # Plot the rectangle using the color of the class
+            ax.plot(
+                [x, x, x + w, x + w, x],
+                [y, y + h, y + h, y, y], 
+                colors[label.cls],
+                #label=names[label.cls],
+            )
+            # Annotator is part of the helper functionality from YOLO itself, didn't work out for me so I used Matplotlib instead
+            # annotator = Annotator(img, line_width=3)
+            # annotator.box_label(pos, names[label.cls], (255, 0, 0))
+    # Plot the image
+    im = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    #ax.legend()  # Legend is not working in Jupyter notebook somehow?
+    ax.imshow(im)
+    if not show_axis:
+        ax.set_axis_off()
+    return fig
+
+
+def show_pred_img(img_path, label_path=None, pred_path=None, label_text=False, show_axis=False):
     img = cv2.imread(img_path)
     fig, ax = plt.subplots()
     if not label_path is None:
@@ -99,15 +143,35 @@ def show_labeled_img(img_path, label_path=None, label_text=False):
                 [x, x, x + w, x + w, x],
                 [y, y + h, y + h, y, y],
                 colors[label.cls],
-                label=names[label.cls],
+                linewidth=1
             )
-            # Annotator is part of the helper functionality from YOLO itself, didn't work out for me so I used Matplotlib instead
-            # annotator = Annotator(img, line_width=3)
-            # annotator.box_label(pos, names[label.cls], (255, 0, 0))
+    if not pred_path is None:
+        labels = read_labels(pred_path)
+        for label in labels:
+            # Convert normalized to coordinates and widths/heights in units of pixels
+            pos = np.array(
+                [img.shape[1], img.shape[0], img.shape[1], img.shape[0]]
+            ) * np.array(label.pos)
+            x_center, y_center, w, h = pos
+            # Convert centered coordinates to upper-left corner
+            x = x_center - w / 2
+            y = y_center - h / 2
+            pos = [x, y, w, h]
+            # Plot the rectangle using the color of the class
+            color = matplotlib.colors.ColorConverter.to_rgb(colors[label.cls])
+            rgb = scale_lightness(color, 1.6)
+            ax.plot(
+                [x, x, x + w, x + w, x],
+                [y, y + h, y + h, y, y],
+                color=rgb,
+                linewidth=1
+            )
     # Plot the image
     im = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    ax.legend()  # Legend is not working in Jupyter notebook somehow?
+    #ax.legend()  # Legend is not working in Jupyter notebook somehow?
     ax.imshow(im)
+    if not show_axis:
+        ax.set_axis_off()
     return fig
 
 
